@@ -1,0 +1,12 @@
+# окружение
+venv/
+.venv/
+__pycache__/
+*.pyc
+.env
+
+# результаты
+report.json
+out/
+*.log
+stuck.md
