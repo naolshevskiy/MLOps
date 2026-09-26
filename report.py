@@ -1,21 +1,37 @@
 #!/usr/bin/env python3
 with open('/home/naolshevskiy/learning/ai-course/llm-cost-cli/data/llm_log.csv', 'r') as f:
     lines = f.readlines()
-dict = {}
+counts = {}
+skipping = 0
+line_count = sum(1 for line in lines)
 
 for line in lines:
-    try:
+     try:
         spisok = line.split(",")
+        if len(spisok) != 5:
+            print(f"DEBUG: строка не прошла по длине: {line.strip()}")
+            skipping += 1
+            continue
         model = spisok[1].lower()
         tokens = int(spisok[2])
         call = int(spisok[3])
-        dict.setdefault(model, {'tokens': 0, "call": 0})
-        dict[model]['tokens'] += tokens
-        dict[model]['call'] += call
-    except:
-        pass
+        money = float(spisok[4])
+     except (ValueError, IndexError):
+         print(f"DEBUG: строка не прошла по типу: {line.strip()}")
+         skipping += 1
+         continue
 
-top5 = sorted(dict.items(), key=lambda x: x[1]['call'], reverse=True)[:5]
+     counts.setdefault(model, {'tokens': 0, "call": 0, "money": 0})
+     counts[model]['tokens'] += tokens
+     counts[model]['call'] += call
+     counts[model]['money'] += money
 
-for model, data in top5:
-    print(f"«{model}: {data['call']} вызов, {data['tokens']} токенов»")
+report = sorted(counts.items(), key = lambda x: x[1]['money'], reverse = True)
+
+full_summ = sum(counts[model]['money'] for model in counts)
+
+print("\nТоп моделей по стоимости:")
+for model, data in report:
+      print(f"{model}: {data['money']} $")
+
+print(f'\nИТОГИ:\nПрочитано:{line_count}\nПропущено:{skipping}\nСумма:{full_summ}')
