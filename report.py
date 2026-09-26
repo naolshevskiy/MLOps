@@ -13,6 +13,9 @@ for line in lines:
             skipping += 1
             continue
         model = spisok[1].lower()
+        if not model:
+            print(f"DEBUG: нет названия модели: {line.strip()}")
+            continue
         tokens = int(spisok[2])
         call = int(spisok[3])
         money = float(spisok[4])
@@ -28,10 +31,11 @@ for line in lines:
 
 report = sorted(counts.items(), key = lambda x: x[1]['money'], reverse = True)
 
-full_summ = sum(counts[model]['money'] for model in counts)
+full_summ = round(sum(counts[model]['money'] for model in counts), 6)
 
-print("\nТоп моделей по стоимости:")
+print("Топ моделей по стоимости:")
 for model, data in report:
-      print(f"{model}: {data['money']} $")
+       print(f"{model}: {data['money']} $")
+
 
 print(f'\nИТОГИ:\nПрочитано:{line_count}\nПропущено:{skipping}\nСумма:{full_summ}')
