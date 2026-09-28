@@ -1,41 +1,63 @@
 #!/usr/bin/env python3
 with open('/home/naolshevskiy/learning/ai-course/llm-cost-cli/data/llm_log.csv', 'r') as f:
     lines = f.readlines()
-counts = {}
-skipping = 0
-line_count = sum(1 for line in lines)
 
-for line in lines:
-     try:
-        spisok = line.split(",")
-        if len(spisok) != 5:
-            print(f"DEBUG: строка не прошла по длине: {line.strip()}")
-            skipping += 1
+line_count = len(lines)
+
+
+def parse_line(lines):
+    counts = {}
+    skippings = 0
+    for line in lines:
+        try:
+            spisok = line.split(",")
+            if len(spisok) != 5:
+<<<<<<< HEAD
+                print(f"DEBUG: строка не прошла по длине: {line.strip()}")
+=======
+>>>>>>> c30544f (session5)
+                skippings += 1
+                continue
+            model = spisok[1].lower()
+            if not model:
+<<<<<<< HEAD
+                print(f"DEBUG: нет названия модели: {line.strip()}")
+=======
+>>>>>>> c30544f (session5)
+                skippings += 1
+                continue
+            tokens = int(spisok[2])
+            call = int(spisok[3])
+            money = float(spisok[4])
+        except (ValueError, IndexError):
+<<<<<<< HEAD
+            print(f"DEBUG: строка не прошла по типу: {line.strip()}")
+=======
+>>>>>>> c30544f (session5)
+            skippings += 1
             continue
-        model = spisok[1].lower()
-        if not model:
-            print(f"DEBUG: нет названия модели: {line.strip()}")
-            continue
-        tokens = int(spisok[2])
-        call = int(spisok[3])
-        money = float(spisok[4])
-     except (ValueError, IndexError):
-         print(f"DEBUG: строка не прошла по типу: {line.strip()}")
-         skipping += 1
-         continue
 
-     counts.setdefault(model, {'tokens': 0, "call": 0, "money": 0})
-     counts[model]['tokens'] += tokens
-     counts[model]['call'] += call
-     counts[model]['money'] += money
+        counts.setdefault(model, {'tokens': 0, "call": 0, "money": 0})
+        counts[model]['tokens'] += tokens
+        counts[model]['call'] += call
+        counts[model]['money'] += money
 
-report = sorted(counts.items(), key = lambda x: x[1]['money'], reverse = True)
+    return counts, skippings
 
-full_summ = round(sum(counts[model]['money'] for model in counts), 6)
+def format_row(counts, line_count, skippings):
 
-print("Топ моделей по стоимости:")
-for model, data in report:
-       print(f"{model}: {data['money']} $")
+    report = sorted(counts.items(), key=lambda x: x[1]['money'], reverse=True)
+    full_summ = round(sum(counts[model]['money'] for model in counts), 6)
+    report_mass = []
+    for model, data in counts.items():
+        report_mass.append(f"{model}: {data['money']}")
+    report_str = '\n'.join(report_mass)
+    result = f'Топ моделей по стоимости:\n{report_str}\n\nИТОГИ:\nПрочитано:{line_count}\nПропущено:{skippings}\nСумма:{full_summ}'
+    return result
 
 
-print(f'\nИТОГИ:\nПрочитано:{line_count}\nПропущено:{skipping}\nСумма:{full_summ}')
+counts, skippings = parse_line(lines)
+<<<<<<< HEAD
+=======
+print(format_row(counts, line_count, skippings))
+>>>>>>> c30544f (session5)
