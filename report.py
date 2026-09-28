@@ -12,28 +12,16 @@ def parse_line(lines):
         try:
             spisok = line.split(",")
             if len(spisok) != 5:
-<<<<<<< HEAD
-                print(f"DEBUG: строка не прошла по длине: {line.strip()}")
-=======
->>>>>>> c30544f (session5)
                 skippings += 1
                 continue
             model = spisok[1].lower()
             if not model:
-<<<<<<< HEAD
-                print(f"DEBUG: нет названия модели: {line.strip()}")
-=======
->>>>>>> c30544f (session5)
                 skippings += 1
                 continue
             tokens = int(spisok[2])
             call = int(spisok[3])
             money = float(spisok[4])
         except (ValueError, IndexError):
-<<<<<<< HEAD
-            print(f"DEBUG: строка не прошла по типу: {line.strip()}")
-=======
->>>>>>> c30544f (session5)
             skippings += 1
             continue
 
@@ -57,7 +45,4 @@ def format_row(counts, line_count, skippings):
 
 
 counts, skippings = parse_line(lines)
-<<<<<<< HEAD
-=======
 print(format_row(counts, line_count, skippings))
->>>>>>> c30544f (session5)
