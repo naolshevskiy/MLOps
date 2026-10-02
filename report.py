@@ -1,50 +1,91 @@
-#!/usr/bin/env python3
-with open('/home/naolshevskiy/learning/ai-course/llm-cost-cli/data/llm_log.csv', 'r') as f:
-    lines = f.readlines()
+from pathlib import Path
+import logging
+import json
+import csv
+import sys
 
-line_count = len(lines)
+logging.basicConfig(
+    level=logging.WARNING,
+    format='%(levelname)s: %(message)s'
+)
 
+BASE_DIR = Path(__file__).resolve().parent
+file_path = BASE_DIR / "data" / "llm_log.csv"
 
-def parse_line(lines):
-    counts = {}
-    skippings = 0
-    for line in lines:
+class LogParserError(Exception):
+    pass
+
+with open(file_path, "r", newline='', encoding='utf-8-sig') as f:
+    reader = csv.reader(f)
+    report = []
+    
+    for line_number, row in enumerate(reader, start=1):
         try:
-            spisok = line.split(",")
-            if len(spisok) != 5:
-                print(f"DEBUG: строка не прошла по длине: {line.strip()}")
-                skippings += 1
-                continue
-            model = spisok[1].lower()
-            if not model:
-                print(f"DEBUG: нет названия модели: {line.strip()}")
-                skippings += 1
-                continue
-            tokens = int(spisok[2])
-            call = int(spisok[3])
-            money = float(spisok[4])
-        except (ValueError, IndexError):
-            print(f"DEBUG: строка не прошла по типу: {line.strip()}")
-            skippings += 1
+            # Проверка 1: пустая строка
+            if not row:
+                raise LogParserError(f'Пустая строка {line_number}')
+            
+            # Проверка 2: неверное количество полей
+            if len(row) != 5:
+                raise LogParserError(f'Неверное количество полей в строке {line_number}: {len(row)}')
+            
+            # Извлекаем данные по индексам
+            data = row[0].strip()
+            model = row[1].strip().lower()
+            tokens = int(row[2].strip())
+            call = int(row[3].strip())
+            cost = float(row[4].strip())
+            
+            # Проверка 3: пустые значения после strip()
+            if not data or not model:
+                raise LogParserError(f'Пустые данные в строке {line_number}')
+            
+            report.append({
+                'data': data,
+                'model': model,
+                'tokens': tokens,
+                'call': call,
+                'cost': cost
+            })
+            
+        except (ValueError, IndexError, LogParserError) as err:
+            logging.warning(err)
             continue
 
-        counts.setdefault(model, {'tokens': 0, "call": 0, "money": 0})
-        counts[model]['tokens'] += tokens
-        counts[model]['call'] += call
-        counts[model]['money'] += money
+# Агрегация по моделям
+model_costs = {}
+for item in report:
+    model_costs.setdefault(item['model'], 0)
+    model_costs[item['model']] += item['cost']
 
-    return counts, skippings
+# Сортировка по убыванию стоимости
+model_cost = sorted(model_costs.items(), key=lambda x: x[1], reverse=True)
 
-def format_row(counts, line_count, skippings):
+# Подсчет общей суммы
+total_sum = round(sum(cost for model, cost in model_cost), 6)
 
-    report = sorted(counts.items(), key=lambda x: x[1]['money'], reverse=True)
-    full_summ = round(sum(counts[model]['money'] for model in counts), 6)
-    report_mass = []
-    for model, data in counts.items():
-        report_mass.append(f"{model}: {data['money']}")
-    report_str = '\n'.join(report_mass)
-    result = f'Топ моделей по стоимости:\n{report_str}\n\nИТОГИ:\nПрочитано:{line_count}\nПропущено:{skippings}\nСумма:{full_summ}'
-    return result
+# Вывод таблицы в консоль
+print("Модель                    | Стоимость")
+print("-" * 40)
+for model, cost in model_cost:
+    print(f"{model:<25} | {cost:.6f}")
+print("-" * 40)
+print(f"{'ИТОГО':<25} | {total_sum:.6f}")
 
+# Формирование финальной структуры для JSON
+final_report = {
+    'models': [],
+    'total_cost': total_sum
+}
 
-counts, skippings = parse_line(lines)
+for model, cost in model_cost:
+    final_report['models'].append({
+        'model': model,
+        'cost': cost
+    })
+
+# Запись в JSON
+with open("report.json", "w", encoding='utf-8') as f:
+    json.dump(final_report, f, ensure_ascii=False, indent=4)
+
+sys.exit(0)
