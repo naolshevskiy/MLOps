@@ -87,5 +87,4 @@ for model, cost in model_cost:
 # Запись в JSON
 with open("report.json", "w", encoding='utf-8') as f:
     json.dump(final_report, f, ensure_ascii=False, indent=4)
-
 sys.exit(0)
